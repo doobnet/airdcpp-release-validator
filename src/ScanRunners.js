@@ -74,7 +74,7 @@ const ScanRunners = function (socket, extensionName, configGetter) {
     const scanner = Scanner(configGetter().validators, errorLogger, pathValidator(false));
     await scanner.scanPaths(paths);
     onManualScanCompleted(scanner);
-    
+
     return scanner;
   };
 
@@ -107,7 +107,7 @@ const ScanRunners = function (socket, extensionName, configGetter) {
       const error = scanner.errors.pickOne();
 
       postEvent(
-        `Following problems were found while scanning the bundle ${bundle.name}: ${scanner.errors.format()}`, 
+        `Following problems were found while scanning the bundle ${bundle.name}: ${scanner.errors.format()}`,
         'error'
       );
 
@@ -131,7 +131,7 @@ const ScanRunners = function (socket, extensionName, configGetter) {
       const error = scanner.errors.pickOne();
 
       postEvent(
-        `Following problems were found while scanning the share directory ${path}: ${scanner.errors.format()}`, 
+        `Following problems were found while scanning the share directory ${path}: ${scanner.errors.format()}`,
         'error'
       );
 
