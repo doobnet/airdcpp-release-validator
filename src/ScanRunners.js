@@ -1,5 +1,74 @@
 import Scanner from './Scanner';
+import fs from 'async-file';
+import path from 'path';
 
+const bundleTypes = [
+  {
+    type: 'tvShow',
+    regex: /(.+)\.s(\d\d)e\d\d.+/i
+  },
+  {
+    type: 'movie',
+    regex: /.+Blu-?Ray.*/i
+  },
+  {
+    type: 'unrecognized',
+    regex: /.*/i
+  }
+];
+
+const tvShowsBasePath = '/share/data1/dc_shared/tv_shows'
+const moviesBasePath = '/share/data1/dc_shared/movies/blu-ray'
+
+const getBundleType = (path) => {
+  for (var i = 0; i < bundleTypes.length; i++)
+  {
+    const bundleType = bundleTypes[i];
+    const matches = path.match(bundleType.regex)
+    var result = { type: bundleType.type }
+
+    if (matches)
+    {
+      if (bundleType.type == 'tvShow')
+      {
+        result.show = matches[1]
+        result.season = matches[2]
+      }
+
+      return result;
+    }
+  }
+
+  return null;
+}
+
+const inferDestinationPath = (path) => {
+  const [type, show, season] = getBundleType(path)
+  const dirName = path.dirname(path);
+
+  if (type == 'tvShow')
+    return path.join(tvShowsBasePath, show, 's' + season, dirName);
+
+  else if (type == 'movie')
+    return path.join(moviesBasePath, dirName);
+
+  else
+    null;
+}
+
+const moveCompletedBundle = async (socket, path) => {
+  const destinationPath = inferDestinationPath(path);
+
+  if (destinationPath)
+  {
+    if (bundlePath[bundlePath.length - 1] == '/')
+      bundlePath = bundlePath.slice(0, -1);
+
+    socket.logger.info(`Moving: ${bundlePath} to ${destinationPath}`);
+    await fs.mkdirp(path.dirname(destinationPath));
+    await fs.rename(bundlePath, destinationPath);
+  }
+}
 
 // Scan initiators
 const ScanRunners = function (socket, extensionName, configGetter) {
@@ -113,6 +182,7 @@ const ScanRunners = function (socket, extensionName, configGetter) {
 
       reject(error.id, error.message);
     } else {
+      await moveCompletedBundle(socket, bundle.target);
       accept();
     }
 
