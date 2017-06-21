@@ -1,7 +1,58 @@
 import ScanRunners from 'ScanRunners';
 import path from 'path';
+import { getBundleType } from 'ScanRunners';
 
 import validators from 'validators';
+
+describe('getBundleType', () => {
+  describe('when the path is a tv show', () => {
+    const show = 'foo';
+    const season = '05';
+    const path = `${show}.S${season}E07.720p.HDTV.X264-BAR`;
+
+    test('should return "tvShow" as the bundle type', () => {
+      const result = getBundleType(path);
+      expect(result.type).toBe('tvShow');
+    });
+
+    test('should return the show', () => {
+      const result = getBundleType(path);
+      expect(result.show).toBe(show);
+    });
+
+    test('should return the season', () => {
+      const result = getBundleType(path);
+      expect(result.season).toBe(season);
+    });
+  });
+
+  describe('when the path is a movie', () => {
+    const path = `F-oo.bar.2013.1080p.BluRay.x264-FOO/`;
+
+    test('should return "movie" as the bundle type', () => {
+      const result = getBundleType(path);
+      expect(result.type).toBe('movie');
+    });
+
+    describe('when the name contains Blu-Ray', () => {
+      const path = `F-oo.bar.2013.1080p.Blu-Ray.x264-FOO/`;
+
+      test('should return "movie" as the bundle type', () => {
+        const result = getBundleType(path);
+        expect(result.type).toBe('movie');
+      });
+    });
+  });
+
+  describe('when the path is something else', () => {
+    const path = 'foo.bar';
+
+    test('should return "unrecognized" as the bundle type', () => {
+      const result = getBundleType(path);
+      expect(result.type).toBe('unrecognized');
+    });
+  })
+});
 
 describe('Scan runner', () => {
   const logger = {
@@ -13,13 +64,13 @@ describe('Scan runner', () => {
 
   const getScanRunners = (socket, ignoreExcluded = false) => {
     return ScanRunners(
-      socket, 
+      socket,
       'test-extension',
       () => ({
         validators,
         ignoreExcluded,
       }),
-      
+
     );
   };
 
@@ -104,7 +155,7 @@ describe('Scan runner', () => {
       new_parent: false,
     };
 
-    
+
     const reject = jest.fn();
     const accept = jest.fn();
 

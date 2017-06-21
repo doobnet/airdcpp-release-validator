@@ -70,6 +70,8 @@ const moveCompletedBundle = async (socket, path) => {
   }
 }
 
+export { getBundleType, inferDestinationPath, moveCompletedBundle };
+
 // Scan initiators
 const ScanRunners = function (socket, extensionName, configGetter) {
   const reduceGroupedPath = (reduced, info) => {
