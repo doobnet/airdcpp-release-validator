@@ -17,22 +17,24 @@ const bundleTypes = [
   }
 ];
 
-const tvShowsBasePath = '/share/data1/dc_shared/tv_shows'
-const moviesBasePath = '/share/data1/dc_shared/movies/blu-ray'
+const shareBasePaths = {
+  tvShow: '/share/data2/dc_shared/tv_shows',
+  movie: '/share/data2/dc_shared/movies/blu-ray'
+}
 
-const getBundleType = (path) => {
+const getBundleType = (bundlePath) => {
   for (var i = 0; i < bundleTypes.length; i++)
   {
     const bundleType = bundleTypes[i];
-    const matches = path.match(bundleType.regex)
+    const matches = bundlePath.match(bundleType.regex)
     var result = { type: bundleType.type }
 
     if (matches)
     {
       if (bundleType.type == 'tvShow')
       {
-        result.show = matches[1]
-        result.season = matches[2]
+        result.show = path.basename(matches[1]);
+        result.season = matches[2];
       }
 
       return result;
@@ -42,22 +44,23 @@ const getBundleType = (path) => {
   return null;
 }
 
-const inferDestinationPath = (path) => {
-  const [type, show, season] = getBundleType(path)
-  const dirName = path.dirname(path);
+const inferDestinationPath = (bundlePath, shareBasePaths) => {
+  const { type, show, season } = getBundleType(bundlePath)
+  const baseName = path.basename(bundlePath);
+  const shareBasePath = shareBasePaths[type];
 
   if (type == 'tvShow')
-    return path.join(tvShowsBasePath, show, 's' + season, dirName);
+    return path.join(shareBasePath, show, 's' + season, baseName);
 
   else if (type == 'movie')
-    return path.join(moviesBasePath, dirName);
+    return path.join(shareBasePath, baseName);
 
   else
-    null;
+    return null;
 }
 
-const moveCompletedBundle = async (socket, path) => {
-  const destinationPath = inferDestinationPath(path);
+const moveCompletedBundle = async (socket, bundlePath) => {
+  const destinationPath = inferDestinationPath(bundlePath, shareBasePaths);
 
   if (destinationPath)
   {
@@ -70,7 +73,7 @@ const moveCompletedBundle = async (socket, path) => {
   }
 }
 
-export { getBundleType, inferDestinationPath, moveCompletedBundle };
+export { getBundleType, inferDestinationPath };
 
 // Scan initiators
 const ScanRunners = function (socket, extensionName, configGetter) {

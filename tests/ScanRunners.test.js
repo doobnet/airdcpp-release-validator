@@ -1,14 +1,16 @@
 import ScanRunners from 'ScanRunners';
 import path from 'path';
-import { getBundleType } from 'ScanRunners';
+import { getBundleType, inferDestinationPath } from 'ScanRunners';
 
 import validators from 'validators';
+
+import fs from 'async-file';
 
 describe('getBundleType', () => {
   describe('when the path is a tv show', () => {
     const show = 'foo';
     const season = '05';
-    const path = `${show}.S${season}E07.720p.HDTV.X264-BAR`;
+    const path = `/Downloads/${show}.S${season}E07.720p.HDTV.X264-BAR`;
 
     test('should return "tvShow" as the bundle type', () => {
       const result = getBundleType(path);
@@ -27,7 +29,7 @@ describe('getBundleType', () => {
   });
 
   describe('when the path is a movie', () => {
-    const path = `F-oo.bar.2013.1080p.BluRay.x264-FOO/`;
+    const path = `/Downloads/F-oo.bar.2013.1080p.BluRay.x264-FOO/`;
 
     test('should return "movie" as the bundle type', () => {
       const result = getBundleType(path);
@@ -35,7 +37,7 @@ describe('getBundleType', () => {
     });
 
     describe('when the name contains Blu-Ray', () => {
-      const path = `F-oo.bar.2013.1080p.Blu-Ray.x264-FOO/`;
+      const path = `/Downloads/F-oo.bar.2013.1080p.Blu-Ray.x264-FOO/`;
 
       test('should return "movie" as the bundle type', () => {
         const result = getBundleType(path);
@@ -45,13 +47,57 @@ describe('getBundleType', () => {
   });
 
   describe('when the path is something else', () => {
-    const path = 'foo.bar';
+    const path = '/Downloads/foo.bar';
 
     test('should return "unrecognized" as the bundle type', () => {
       const result = getBundleType(path);
       expect(result.type).toBe('unrecognized');
     });
   })
+});
+
+describe('inferDestinationPath', () => {
+  const shareBasePaths = {
+    tvShow: '/Share/tv_shows',
+    movie: '/Share/movies'
+  }
+
+  describe('when the path is a tv show', () => {
+    const shareBasePath = shareBasePaths.tvShow;
+    const show = 'foo';
+    const season = '05';
+    const dirName = `${show}.S${season}E07.720p.HDTV.X264-BAR`;
+    const path = `/Downloads/${dirName}/`;
+
+    test('should destination path correctly inferred for tv shows', async () => {
+      const destPath = inferDestinationPath(path, shareBasePaths);
+      const expected = `${shareBasePath}/${show}/s${season}/${dirName}`;
+
+      expect(destPath).toBe(expected);
+    });
+  });
+
+  describe('when the path is a movie', () => {
+    const shareBasePath = shareBasePaths.movie;
+    const dirName = 'F-oo.bar.2013.1080p.BluRay.x264-FOO'
+    const path = `/Downloads/${dirName}`;
+
+    test('should destination path correctly inferred for tv shows', async () => {
+      const destPath = inferDestinationPath(path, shareBasePaths);
+      const expected = `${shareBasePath}/${dirName}`;
+
+      expect(destPath).toBe(expected);
+    });
+  });
+
+  describe('when the path is something else', () => {
+    const path = '/Downloads/foo.bar';
+
+    test('should return null', () => {
+      const destPath = inferDestinationPath(path, shareBasePaths);
+      expect(destPath).toBeNull();
+    })
+  });
 });
 
 describe('Scan runner', () => {
